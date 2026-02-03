@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"net/http"
 	"sync"
 
 	"budget_tracker/locales"
@@ -67,6 +68,7 @@ func App() *buffalo.App {
 		app.Use(popmw.Transaction(models.DB))
 		app.GET("/", HomeHandler)
 		app.Resource("/transactions", TransactionsResource{})
+		app.ServeFiles("/", http.Dir("./public"))
 	})
 
 	return app
