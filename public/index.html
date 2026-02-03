@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Buffalo Budget Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Budget Tracker</h1>
+        <form id="budgetForm">
+            <input type="text" id="desc" placeholder="Description (e.g. Salary)" required>
+            <input type="number" id="amount" placeholder="Amount" step="0.01" required>
+            <select id="type">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <button type="submit">Add Transaction</button>
+        </form>
+        <ul id="list"></ul>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>

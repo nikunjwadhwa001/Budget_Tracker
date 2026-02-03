@@ -4,7 +4,7 @@ development:
   database: budget_tracker_development
   user: postgres
   password: postgres
-  host: 127.0.0.1
+  host: db
   pool: 5
 
 test:
