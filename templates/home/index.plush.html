@@ -1,0 +1,10 @@
+<div class="jumbotron">
+    <h1 class="display-4">Welcome to Budget Tracker</h1>
+    <p class="lead">Track your expenses and income easily.</p>
+    <hr class="my-4">
+    <%= if (current_user) { %>
+        <p>Go to your <a href="/transactions">Transactions</a>.</p>
+        <% } else { %>
+            <p>Please <a href="/signin">Sign In</a> or <a href="/users/new">Sign Up</a> to continue.</p>
+            <% } %>
+</div>

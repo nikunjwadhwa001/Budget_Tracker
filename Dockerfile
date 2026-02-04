@@ -1,38 +1,42 @@
-# This is a multi-stage Dockerfile and requires >= Docker 17.05
-# https://docs.docker.com/engine/userguide/eng-image/multistage-build/
-FROM gobuffalo/buffalo:v0.18.14 as builder
+# Build Stage
+FROM golang:1.25-alpine AS builder
 
-ENV GOPROXY http://proxy.golang.org
+# Install system tools
+RUN apk add --no-cache git
 
-RUN mkdir -p /src/code
-WORKDIR /src/code
+# 1. Install Main Buffalo CLI
+RUN go install github.com/gobuffalo/cli/cmd/buffalo@latest
 
-# Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
+# ---> FIX: Install Soda (The direct database tool) <---
+RUN go install github.com/gobuffalo/pop/v6/soda@latest
+
+WORKDIR /app
+
+# Copy dependencies
+COPY go.mod go.sum ./
 RUN go mod download
 
-ADD . .
-RUN buffalo build --static -o /bin/app
+# Copy source code
+COPY . .
 
-FROM alpine
-RUN apk add --no-cache bash
+# Build the app
+RUN go build -o bin/app .
+
+# Final Stage
+FROM alpine:latest
+WORKDIR /root/
+
 RUN apk add --no-cache ca-certificates
 
-WORKDIR /bin/
+# Copy app binary and config
+COPY --from=builder /app/bin/app .
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/database.yml .
 
-COPY --from=builder /bin/app .
-
-# Uncomment to run the binary in "production" mode:
-# ENV GO_ENV=production
-
-# Bind the app to 0.0.0.0 so it can be seen from outside the container
-ENV ADDR=0.0.0.0
+# Copy the tools
+COPY --from=builder /go/bin/buffalo /usr/local/bin/buffalo
+# ---> Copy Soda <---
+COPY --from=builder /go/bin/soda /usr/local/bin/soda
 
 EXPOSE 3000
-
-# Uncomment to run the migrations before running the binary:
-# CMD /bin/app migrate; /bin/app
-CMD exec /bin/app
+CMD ["./app"]

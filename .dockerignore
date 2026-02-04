@@ -1,10 +1,11 @@
-node_modules/
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
+# .dockerignore
+.git
+node_modules
+vendor
+bin
+tmp
+.idea
+.vscode
 *.log
-bin/
+docker-compose.yml
+Dockerfile

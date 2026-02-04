@@ -1,0 +1,12 @@
+<div class="py-4 mb-2">
+    <h3 class="d-inline-block">User Details</h3>
+</div>
+
+<ul class="list-group mb-2">
+    <li class="list-group-item">
+        <strong>Email</strong>: <%= user.Email %>
+    </li>
+</ul>
+
+<a href="<%= usersPath() %>" class="btn btn-info">Back to all Users</a>
+<a href="<%= editUserPath({ user_id: user.ID }) %>" class="btn btn-warning">Edit</a>

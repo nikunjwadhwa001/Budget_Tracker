@@ -1,0 +1,35 @@
+<h1>Transactions</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <%= for (t) in transactions { %>
+            <tr>
+                <td>
+                    <%= t.Description %>
+                </td>
+                <td>
+                    <%= t.Amount %>
+                </td>
+                <td>
+                    <%= t.Type %>
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <a href="/transactions/<%= t.ID %>" class="btn btn-info">View</a>
+                        <a href="/transactions/<%= t.ID %>/edit" class="btn btn-warning">Edit</a>
+                    </div>
+                </td>
+            </tr>
+            <% } %>
+    </tbody>
+</table>
+
+<a href="/transactions/new" class="btn btn-primary">New Transaction</a>

@@ -231,3 +231,30 @@ func (v TransactionsResource) Destroy(c buffalo.Context) error {
 		return c.Render(http.StatusOK, r.XML(transaction))
 	}).Respond(c)
 }
+
+// New renders the form for creating a new Transaction.
+// This function is mapped to the path GET /transactions/new
+func (v TransactionsResource) New(c buffalo.Context) error {
+	c.Set("transaction", &models.Transaction{})
+	return c.Render(http.StatusOK, r.HTML("transactions/new.plush.html"))
+}
+
+// Edit renders a edit form for a Transaction.
+// This function is mapped to the path GET /transactions/{transaction_id}/edit
+func (v TransactionsResource) Edit(c buffalo.Context) error {
+	// Get the DB connection from the context
+	tx, ok := c.Value("tx").(*pop.Connection)
+	if !ok {
+		return fmt.Errorf("no transaction found")
+	}
+
+	// Allocate an empty Transaction
+	transaction := &models.Transaction{}
+
+	if err := tx.Find(transaction, c.Param("transaction_id")); err != nil {
+		return c.Error(http.StatusNotFound, err)
+	}
+
+	c.Set("transaction", transaction)
+	return c.Render(http.StatusOK, r.HTML("transactions/edit.plush.html"))
+}

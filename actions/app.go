@@ -10,7 +10,6 @@ import (
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/buffalo-pop/v3/pop/popmw"
 	"github.com/gobuffalo/envy"
-	"github.com/gobuffalo/middleware/contenttype"
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
@@ -59,15 +58,37 @@ func App() *buffalo.App {
 		// Log request parameters (filters apply).
 		app.Use(paramlogger.ParameterLogger)
 
-		// Set the request content type to JSON
-		app.Use(contenttype.Set("application/json"))
+		// Protect against CSRF attacks. https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)
+		// app.Use(csrf.New)
 
 		// Wraps each request in a transaction.
 		//   c.Value("tx").(*pop.Connection)
 		// Remove to disable this.
 		app.Use(popmw.Transaction(models.DB))
+
+		// Setup and use translations:
+		app.Use(translations())
+
+		app.Use(SetCurrentUser)
+		app.Use(func(next buffalo.Handler) buffalo.Handler {
+			return func(c buffalo.Context) error {
+				// Make the current_user available to the views
+				c.Set("current_user", c.Value("current_user"))
+				return next(c)
+			}
+		})
+
 		app.GET("/", HomeHandler)
-		app.Resource("/transactions", TransactionsResource{})
+
+		app.Resource("/users", UsersResource{})
+		app.GET("/signin", AuthNew)
+		app.POST("/signin", AuthCreate)
+		app.GET("/signout", AuthDestroy)
+
+		t := app.Group("/transactions")
+		t.Use(Authorize)
+		t.Resource("/", TransactionsResource{})
+
 		app.ServeFiles("/", http.Dir("./public"))
 	})
 

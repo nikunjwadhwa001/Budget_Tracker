@@ -1,0 +1,18 @@
+<div class="py-4 mb-2">
+    <h3 class="d-inline-block">Transaction Details</h3>
+</div>
+
+<ul class="list-group mb-2">
+    <li class="list-group-item">
+        <strong>Description</strong>: <%= transaction.Description %>
+    </li>
+    <li class="list-group-item">
+        <strong>Amount</strong>: <%= transaction.Amount %>
+    </li>
+    <li class="list-group-item">
+        <strong>Type</strong>: <%= transaction.Type %>
+    </li>
+</ul>
+
+<a href="<%= editTransactionPath({ transaction_id: transaction.ID }) %>" class="btn btn-warning">Edit</a>
+<a href="<%= transactionsPath() %>" class="btn btn-info">Back</a>
