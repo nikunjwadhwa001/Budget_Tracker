@@ -13,7 +13,6 @@ import (
 	"github.com/gobuffalo/middleware/forcessl"
 	"github.com/gobuffalo/middleware/i18n"
 	"github.com/gobuffalo/middleware/paramlogger"
-	"github.com/gobuffalo/x/sessions"
 	"github.com/rs/cors"
 	"github.com/unrolled/secure"
 )
@@ -44,8 +43,8 @@ var (
 func App() *buffalo.App {
 	appOnce.Do(func() {
 		app = buffalo.New(buffalo.Options{
-			Env:          ENV,
-			SessionStore: sessions.Null{},
+			Env: ENV,
+			// SessionStore: sessions.Null{},
 			PreWares: []buffalo.PreWare{
 				cors.Default().Handler,
 			},
@@ -80,10 +79,19 @@ func App() *buffalo.App {
 
 		app.GET("/", HomeHandler)
 
+		app.POST("/account/delete/request/{user_id}", UsersResource{}.RequestDeleteOTP)
+		app.GET("/account/delete/confirm/{user_id}", UsersResource{}.ConfirmDeletePage)
+
 		app.Resource("/users", UsersResource{})
 		app.GET("/signin", AuthNew)
 		app.POST("/signin", AuthCreate)
 		app.GET("/signout", AuthDestroy)
+		app.GET("/verify-otp", AuthVerifyOTP)
+		app.POST("/verify-otp", AuthVerifyOTPPost)
+		app.GET("/forgot-password", AuthForgotGet)
+		app.POST("/forgot-password", AuthForgotPost)
+		app.GET("/reset-password", AuthResetGet)
+		app.POST("/reset-password", AuthResetPost)
 
 		t := app.Group("/transactions")
 		t.Use(Authorize)

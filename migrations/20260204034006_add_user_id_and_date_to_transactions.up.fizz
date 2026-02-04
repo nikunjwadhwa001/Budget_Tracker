@@ -1,0 +1,3 @@
+sql("TRUNCATE TABLE transactions")
+add_column("transactions", "user_id", "uuid", {null: false})
+add_column("transactions", "transaction_date", "date", {null: false})

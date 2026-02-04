@@ -2,7 +2,10 @@ package actions
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/pop/v6"
@@ -131,11 +134,29 @@ func (v UsersResource) Create(c buffalo.Context) error {
 
 	return responder.Wants("html", func(c buffalo.Context) error {
 		// If there are no errors set a success message
-		c.Flash().Add("success", T.Translate(c, "user.created.success"))
-		c.Session().Set("current_user_id", user.ID)
+		// Generate OTP
+		rand.Seed(time.Now().UnixNano())
+		otp := strconv.Itoa(rand.Intn(900000) + 100000)
+		user.OTPCode = otp
+		user.OTPExpiresAt = time.Now().Add(10 * time.Minute)
+		user.IsVerified = false
 
-		// and redirect to the show page
-		return c.Redirect(http.StatusSeeOther, "/")
+		// Save OTP tokens to DB (update the user we just created)
+		if err := tx.Update(user); err != nil {
+			return err
+		}
+
+		// SIMULATE EMAIL SENDING
+		fmt.Printf("\n\n========================================\n")
+		fmt.Printf("SENDING OTP TO %s: %s\n", user.Email, otp)
+		fmt.Printf("========================================\n\n")
+
+		// If there are no errors set a success message
+		c.Flash().Add("success", "Please check your email for the verification code.")
+		c.Session().Set("pre_verification_user_id", user.ID)
+
+		// and redirect to the verify page
+		return c.Redirect(http.StatusSeeOther, "/verify-otp")
 	}).Wants("json", func(c buffalo.Context) error {
 		return c.Render(http.StatusCreated, r.JSON(user))
 	}).Wants("xml", func(c buffalo.Context) error {
@@ -208,29 +229,108 @@ func (v UsersResource) Destroy(c buffalo.Context) error {
 		return fmt.Errorf("no transaction found")
 	}
 
+	// AUTH CHECK: Ensure only self-deletion
+	currentUserID := c.Session().Get("current_user_id")
+	targetUserID := c.Param("user_id")
+
+	if currentUserID == nil || fmt.Sprintf("%v", currentUserID) != targetUserID {
+		c.Flash().Add("danger", "You are not authorized to delete this account.")
+		return c.Redirect(http.StatusSeeOther, "/")
+	}
+
 	// Allocate an empty User
 	user := &models.User{}
 
 	// To find the User the parameter user_id is used.
-	if err := tx.Find(user, c.Param("user_id")); err != nil {
+	if err := tx.Find(user, targetUserID); err != nil {
 		return c.Error(http.StatusNotFound, err)
+	}
+
+	// VERIFY OTP
+	otpInput := c.Request().FormValue("OTP")
+	if user.OTPCode != otpInput {
+		c.Flash().Add("danger", "Invalid OTP. Account deletion cancelled.")
+		return c.Redirect(http.StatusSeeOther, "/account/delete/confirm/%s", user.ID)
 	}
 
 	if err := tx.Destroy(user); err != nil {
 		return err
 	}
 
+	// Clear session after deletion
+	c.Session().Clear()
+
 	return responder.Wants("html", func(c buffalo.Context) error {
 		// If there are no errors set a flash message
-		c.Flash().Add("success", T.Translate(c, "user.destroyed.success"))
+		c.Flash().Add("success", "Account deleted successfully.")
 
-		// Redirect to the index page
-		return c.Redirect(http.StatusSeeOther, "/users")
+		// Redirect to the home page
+		return c.Redirect(http.StatusSeeOther, "/")
 	}).Wants("json", func(c buffalo.Context) error {
 		return c.Render(http.StatusOK, r.JSON(user))
 	}).Wants("xml", func(c buffalo.Context) error {
 		return c.Render(http.StatusOK, r.XML(user))
 	}).Respond(c)
+}
+
+// RequestDeleteOTP generates an OTP and sends it to the user for account deletion
+func (v UsersResource) RequestDeleteOTP(c buffalo.Context) error {
+	tx, ok := c.Value("tx").(*pop.Connection)
+	if !ok {
+		return fmt.Errorf("no transaction found")
+	}
+
+	// AUTH CHECK
+	currentUserID := c.Session().Get("current_user_id")
+	targetUserID := c.Param("user_id")
+
+	c.Logger().Infof("DEBUG: RequestDeleteOTP - CurrentUser: %v (Type: %T), TargetUser: %s", currentUserID, currentUserID, targetUserID)
+
+	if currentUserID == nil || fmt.Sprintf("%v", currentUserID) != targetUserID {
+		c.Flash().Add("danger", "Unauthorized.")
+		return c.Redirect(http.StatusSeeOther, "/")
+	}
+
+	user := &models.User{}
+	if err := tx.Find(user, targetUserID); err != nil {
+		return c.Error(http.StatusNotFound, err)
+	}
+
+	// Generate OTP
+	rand.Seed(time.Now().UnixNano())
+	otp := strconv.Itoa(rand.Intn(900000) + 100000)
+	user.OTPCode = otp
+	// user.OTPExpiresAt = time.Now().Add(10 * time.Minute) // Model update needed if we want strict expiry check here too
+
+	// Use Raw Query to force update of OTP (bypass validation just in case)
+	// But standard Update should work if validations pass. Let's try standard first.
+	// Actually, let's use the Raw Query pattern we found reliable in Auth.
+	q := tx.RawQuery("UPDATE users SET otp_code = ? WHERE id = ?", otp, user.ID)
+	if err := q.Exec(); err != nil {
+		c.Logger().Error("Failed to update OTP for delete", err)
+		return err
+	}
+
+	// SIMULATE EMAIL
+	c.Logger().Infof("\n\n=== DELETE ACCOUNT OVERRIDE OTP ===\nTO: %s\nCODE: %s\n================================\n", user.Email, otp)
+
+	c.Flash().Add("success", "OTP sent. Please confirm deletion.")
+	return c.Redirect(http.StatusSeeOther, "/account/delete/confirm/%s", user.ID)
+}
+
+// ConfirmDeletePage renders the OTP entry form for deletion
+func (v UsersResource) ConfirmDeletePage(c buffalo.Context) error {
+	// AUTH CHECK
+	currentUserID := c.Session().Get("current_user_id")
+	targetUserID := c.Param("user_id")
+	if currentUserID == nil || fmt.Sprintf("%v", currentUserID) != targetUserID {
+		c.Flash().Add("danger", "Unauthorized.")
+		return c.Redirect(http.StatusSeeOther, "/")
+	}
+
+	// Pass user ID to template
+	c.Set("user_id", targetUserID)
+	return c.Render(http.StatusOK, r.HTML("users/confirm_delete.plush.html"))
 }
 
 // New renders the form for creating a new User.

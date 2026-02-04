@@ -1,11 +1,43 @@
-<div class="py-4 mb-2">
-    <h3 class="d-inline-block">Edit Transaction</h3>
-</div>
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h4 class="h5 mb-0 font-weight-bold text-primary">Edit Transaction</h4>
+            </div>
+            <div class="card-body">
+                <%= form_for(transaction, {action: transactionPath({ transaction_id: transaction.ID }), method: "PUT" })
+                    { %>
+                    <%= f.InputTag("Description", {class: "form-control" }) %>
 
-<%= form_for(transaction, {action: transactionPath({ transaction_id: transaction.ID }), method: "PUT" }) { %>
-    <%= f.InputTag("Description") %>
-        <%= f.InputTag("Amount") %>
-            <%= f.InputTag("Type") %>
-                <button class="btn btn-success" role="submit">Save</button>
-                <a href="<%= transactionsPath() %>" class="btn btn-warning">Cancel</a>
-                <% } %>
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <%= f.InputTag("Amount", {class: "form-control" , type: "number" , step: "0.01" }) %>
+                            </div>
+                            <div class="col-md-6">
+                                <%= f.InputTag("TransactionDate", {type: "date" , value:
+                                    transaction.TransactionDate.Format("2006-01-02"), class: "form-control" ,
+                                    label: "Date" }) %>
+                            </div>
+                        </div>
+
+                        <%= f.SelectTag("Type", {options: ["Income", "Expense" ], class: "form-control custom-select" })
+                            %>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <div class="d-flex">
+                                    <%= form({action: transactionPath({ transaction_id: transaction.ID }),
+                                        method: "DELETE" , style: "display:inline;" }) { %>
+                                        <button class="btn btn-outline-danger"
+                                            onclick="return confirm('Are you sure?');">Delete</button>
+                                        <% } %>
+                                </div>
+                                <div>
+                                    <a href="<%= transactionsPath() %>" class="btn btn-secondary mr-2">Cancel</a>
+                                    <button class="btn btn-primary" role="submit">Save Changes</button>
+                                </div>
+                            </div>
+                            <% } %>
+            </div>
+        </div>
+    </div>
+</div>

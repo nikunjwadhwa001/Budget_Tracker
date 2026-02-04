@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gobuffalo/buffalo"
 	"github.com/gobuffalo/pop/v6"
@@ -30,6 +31,8 @@ type TransactionsResource struct {
 
 // List gets all Transactions. This function is mapped to the path
 // GET /transactions
+// List gets all Transactions. This function is mapped to the path
+// GET /transactions
 func (v TransactionsResource) List(c buffalo.Context) error {
 	// Get the DB connection from the context
 	tx, ok := c.Value("tx").(*pop.Connection)
@@ -38,20 +41,60 @@ func (v TransactionsResource) List(c buffalo.Context) error {
 	}
 
 	transactions := &models.Transactions{}
+	u := c.Value("current_user").(*models.User)
 
-	// Paginate results. Params "page" and "per_page" control pagination.
-	// Default values are "page=1" and "per_page=20".
+	// Base Query
 	q := tx.PaginateFromParams(c.Params())
+	q = q.Where("user_id = ?", u.ID)
 
-	// Retrieve all Transactions from the DB
+	// Filter Params
+	month := c.Param("month")
+	year := c.Param("year")
+
+	if month != "" && year != "" {
+		// Postgres specific date extraction
+		// Note: 'extract(month from transaction_date)' returns 1-12
+		q = q.Where("extract(month from transaction_date) = ?", month).
+			Where("extract(year from transaction_date) = ?", year)
+
+		c.Set("filterMonth", month)
+		c.Set("filterYear", year)
+
+		// Calculate Stats for this filtered view
+		// We need a fresh query for stats as 'q' is paginated
+		var stats []struct {
+			Type   string  `db:"type"`
+			Amount float64 `db:"total"`
+		}
+		// Sum amounts grouped by type
+		// Using raw query for aggregation
+		err := tx.RawQuery("SELECT type, SUM(amount) as total FROM transactions WHERE user_id = ? AND extract(month from transaction_date) = ? AND extract(year from transaction_date) = ? GROUP BY type", u.ID, month, year).All(&stats)
+
+		if err == nil {
+			var income, expense float64
+			for _, s := range stats {
+				if s.Type == "Income" {
+					income = s.Amount
+				} else if s.Type == "Expense" {
+					expense = s.Amount
+				}
+			}
+			c.Set("filteredIncome", income)
+			c.Set("filteredExpense", expense)
+			c.Set("filteredMargin", income-expense)
+		}
+	}
+
+	// Order by date desc
+	q = q.Order("transaction_date desc")
+
+	// Retrieve Transactions
 	if err := q.All(transactions); err != nil {
 		return err
 	}
 
 	return responder.Wants("html", func(c buffalo.Context) error {
-		// Add the paginator to the context so it can be used in the template.
 		c.Set("pagination", q.Paginator)
-
 		c.Set("transactions", transactions)
 		return c.Render(http.StatusOK, r.HTML("transactions/index.plush.html"))
 	}).Wants("json", func(c buffalo.Context) error {
@@ -74,7 +117,8 @@ func (v TransactionsResource) Show(c buffalo.Context) error {
 	transaction := &models.Transaction{}
 
 	// To find the Transaction the parameter transaction_id is used.
-	if err := tx.Find(transaction, c.Param("transaction_id")); err != nil {
+	u := c.Value("current_user").(*models.User)
+	if err := tx.Where("user_id = ?", u.ID).Find(transaction, c.Param("transaction_id")); err != nil {
 		return c.Error(http.StatusNotFound, err)
 	}
 
@@ -105,6 +149,9 @@ func (v TransactionsResource) Create(c buffalo.Context) error {
 	if !ok {
 		return fmt.Errorf("no transaction found")
 	}
+
+	u := c.Value("current_user").(*models.User)
+	transaction.UserID = u.ID
 
 	// Validate the data from the html form
 	verrs, err := tx.ValidateAndCreate(transaction)
@@ -154,7 +201,8 @@ func (v TransactionsResource) Update(c buffalo.Context) error {
 	// Allocate an empty Transaction
 	transaction := &models.Transaction{}
 
-	if err := tx.Find(transaction, c.Param("transaction_id")); err != nil {
+	u := c.Value("current_user").(*models.User)
+	if err := tx.Where("user_id = ?", u.ID).Find(transaction, c.Param("transaction_id")); err != nil {
 		return c.Error(http.StatusNotFound, err)
 	}
 
@@ -211,7 +259,8 @@ func (v TransactionsResource) Destroy(c buffalo.Context) error {
 	transaction := &models.Transaction{}
 
 	// To find the Transaction the parameter transaction_id is used.
-	if err := tx.Find(transaction, c.Param("transaction_id")); err != nil {
+	u := c.Value("current_user").(*models.User)
+	if err := tx.Where("user_id = ?", u.ID).Find(transaction, c.Param("transaction_id")); err != nil {
 		return c.Error(http.StatusNotFound, err)
 	}
 
@@ -235,7 +284,9 @@ func (v TransactionsResource) Destroy(c buffalo.Context) error {
 // New renders the form for creating a new Transaction.
 // This function is mapped to the path GET /transactions/new
 func (v TransactionsResource) New(c buffalo.Context) error {
-	c.Set("transaction", &models.Transaction{})
+	c.Set("transaction", &models.Transaction{
+		TransactionDate: time.Now(),
+	})
 	return c.Render(http.StatusOK, r.HTML("transactions/new.plush.html"))
 }
 
@@ -251,7 +302,8 @@ func (v TransactionsResource) Edit(c buffalo.Context) error {
 	// Allocate an empty Transaction
 	transaction := &models.Transaction{}
 
-	if err := tx.Find(transaction, c.Param("transaction_id")); err != nil {
+	u := c.Value("current_user").(*models.User)
+	if err := tx.Where("user_id = ?", u.ID).Find(transaction, c.Param("transaction_id")); err != nil {
 		return c.Error(http.StatusNotFound, err)
 	}
 

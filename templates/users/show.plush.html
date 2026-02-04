@@ -1,12 +1,44 @@
-<div class="py-4 mb-2">
-    <h3 class="d-inline-block">User Details</h3>
+<div class="row justify-content-center py-4">
+    <div class="col-md-8">
+        <!-- Profile details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="h5 mb-0 font-weight-bold text-primary">User Profile</h4>
+            </div>
+            <div class="card-body">
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label font-weight-bold text-muted">Email</label>
+                    <div class="col-sm-9">
+                        <p class="form-control-plaintext text-dark font-weight-bold mb-0">
+                            <%= user.Email %>
+                        </p>
+                    </div>
+                </div>
+                <!-- Add other user details here if needed -->
+
+                <div class="mt-3">
+                    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white py-2">
+                <h5 class="h6 mb-0 font-weight-bold">Danger Zone</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Once you delete your account, there is no going back. Please be certain.
+                </p>
+                <%= form({action: "/account/delete/request/" + user.ID, method: "POST" , style: "display:inline;" }) {
+                    %>
+                    <button class="btn btn-outline-danger btn-sm font-weight-bold"
+                        onclick="return confirm('Are you sure? We will send an OTP to confirm.');">
+                        Delete Account
+                    </button>
+                    <% } %>
+            </div>
+        </div>
+    </div>
 </div>
-
-<ul class="list-group mb-2">
-    <li class="list-group-item">
-        <strong>Email</strong>: <%= user.Email %>
-    </li>
-</ul>
-
-<a href="<%= usersPath() %>" class="btn btn-info">Back to all Users</a>
-<a href="<%= editUserPath({ user_id: user.ID }) %>" class="btn btn-warning">Edit</a>

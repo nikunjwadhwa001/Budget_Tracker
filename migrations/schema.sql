@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict YuqjccSdQal1Q1f0qsAVREW1kAiV7dHPWfXFirJ5i6cvxvt0zuzr0XeXTO72nFV
+\restrict eRET0gZao2klRxiLeYgGnAbUcm9XjhJFxni9a3s37Mo6ezOoEIajh5jsV8XFhjO
 
 -- Dumped from database version 14.20 (Homebrew)
 -- Dumped by pg_dump version 14.20 (Homebrew)
@@ -43,7 +43,9 @@ CREATE TABLE public.transactions (
     description text NOT NULL,
     type text NOT NULL,
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    user_id uuid,
+    transaction_date date
 );
 
 
@@ -58,7 +60,10 @@ CREATE TABLE public.users (
     email character varying(255),
     password_hash character varying(255),
     created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL
+    updated_at timestamp without time zone NOT NULL,
+    otp_code character varying(255),
+    otp_expires_at timestamp without time zone,
+    is_verified boolean DEFAULT false NOT NULL
 );
 
 
@@ -106,5 +111,5 @@ CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YuqjccSdQal1Q1f0qsAVREW1kAiV7dHPWfXFirJ5i6cvxvt0zuzr0XeXTO72nFV
+\unrestrict eRET0gZao2klRxiLeYgGnAbUcm9XjhJFxni9a3s37Mo6ezOoEIajh5jsV8XFhjO
 

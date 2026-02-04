@@ -14,13 +14,17 @@ import (
 
 // User is used by pop to map your users database table to your go code.
 type User struct {
-	ID                   uuid.UUID `json:"id" db:"id"`
-	Email                string    `json:"email" db:"email"`
-	PasswordHash         string    `json:"password_hash" db:"password_hash"`
-	Password             string    `json:"-" db:"-"`
-	PasswordConfirmation string    `json:"-" db:"-"`
-	CreatedAt            time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
+	ID                   uuid.UUID    `json:"id" db:"id"`
+	Email                string       `json:"email" db:"email"`
+	PasswordHash         string       `json:"password_hash" db:"password_hash"`
+	Password             string       `json:"-" db:"-"`
+	PasswordConfirmation string       `json:"-" db:"-"`
+	Transactions         Transactions `json:"transactions,omitempty" has_many:"transactions"`
+	OTPCode              string       `json:"otp_code" db:"otp_code"`
+	OTPExpiresAt         time.Time    `json:"otp_expires_at" db:"otp_expires_at"`
+	IsVerified           bool         `json:"is_verified" db:"is_verified"`
+	CreatedAt            time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt            time.Time    `json:"updated_at" db:"updated_at"`
 }
 
 // String is not required by pop and may be deleted

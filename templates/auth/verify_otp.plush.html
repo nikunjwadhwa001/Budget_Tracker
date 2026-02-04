@@ -1,0 +1,12 @@
+<div class="auth-center">
+    <h3>Verify OTP</h3>
+    <p>Please enter the 6-digit code sent to your email.</p>
+
+    <%= form({action: verifyOtpPath(), method: "POST" }) { %>
+        <div class="form-group">
+            <label>OTP Code</label>
+            <input type="text" name="OTP" class="form-control" placeholder="123456" required>
+        </div>
+        <button class="btn btn-primary">Verify</button>
+        <% } %>
+</div>

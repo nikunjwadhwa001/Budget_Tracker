@@ -1,39 +1,90 @@
-# Welcome to Buffalo
+# 💰 Budget Tracker
 
-Thank you for choosing Buffalo for your web development needs.
+A robust, secure personal finance management application built with **Go** (Buffalo Framework) and **PostgreSQL**. Track your income, expenses, and net margins with ease.
 
-## Database Setup
+## ✨ Features
 
-It looks like you chose to set up your application using a database! Fantastic!
+### 🔐 Authentication & Security
+- **Secure Signup/Login**: Full user registration and authentication loop.
+- **OTP Verification**: Email-based One-Time Password verification for new accounts.
+- **Forgot Password**: Secure password reset flow using OTPs.
+- **Bcrypt Hashing**: Industry-standard password hashing for security.
+- **Session Management**: Secure session handling with Buffalo.
 
-The first thing you need to do is open up the "database.yml" file and edit it to use the correct usernames, passwords, hosts, etc... that are appropriate for your environment.
+### 💸 Budget Management
+- **Transaction Tracking**: Log Income and Expense transactions.
+- **Smart Dashboard**: View real-time Net Margin and financial health indicators.
+- **Date Filtering**: Filter transactions by date range (coming soon).
+- **Responsive Design**: Mobile-friendly UI built with Bootstrap.
 
-You will also need to make sure that **you** start/install the database of your choice. Buffalo **won't** install and start it for you.
+## 🛠️ Tech Stack
 
-### Create Your Databases
+- **Language**: [Go (Golang)](https://golang.org/)
+- **Framework**: [Buffalo](https://gobuffalo.io/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **Frontend**: Plush Templates (HTML), Bootstrap 4, CSS
+- **Containerization**: Docker, Docker Compose
 
-Ok, so you've edited the "database.yml" file and started your database, now Buffalo can create the databases in that file for you:
+## 🚀 Getting Started
 
-```console
-buffalo pop create -a
+### Prerequisites
+
+- [Go](https://golang.org/dl/) (v1.16+)
+- [Docker](https://www.docker.com/products/docker-desktop)
+- [PostgreSQL](https://www.postgresql.org/) (if running locally without Docker)
+- [Buffalo CLI](https://gobuffalo.io/docs/installation) (`go install github.com/gobuffalo/cli/cmd/buffalo@latest`)
+
+### 🐳 Run with Docker (Recommended)
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/budget_tracker.git
+   cd budget_tracker
+   ```
+
+2. **Start the services:**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Access the App:**
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 💻 Run Locally
+
+1. **Install Dependencies:**
+   ```bash
+   go mod tidy
+   ```
+
+2. **Setup Database:**
+   Update `database.yml` with your local Postgres credentials if necessary.
+   ```bash
+   buffalo pop create
+   buffalo pop migrate
+   ```
+
+3. **Start the Server:**
+   ```bash
+   buffalo dev
+   ```
+
+## 🧪 Testing
+
+Run the test suite to ensure everything is working correctly:
+
+```bash
+buffalo test
 ```
 
-## Starting the Application
+## 📂 Project Structure
 
-Buffalo ships with a command that will watch your application and automatically rebuild the Go binary and any assets for you. To do that run the "buffalo dev" command:
+- `actions/`: Application handlers and business logic.
+- `models/`: Database models and struct definitions.
+- `templates/`: Plush HTML templates for the UI.
+- `migrations/`: Database migration files.
+- `public/`: Static assets (CSS, JS, Images).
 
-```console
-buffalo dev
-```
+---
 
-If you point your browser to [http://127.0.0.1:3000](http://127.0.0.1:3000) you should see a "Welcome to Buffalo!" page.
-
-**Congratulations!** You now have your Buffalo application up and running.
-
-## What Next?
-
-We recommend you heading over to [http://gobuffalo.io](http://gobuffalo.io) and reviewing all of the great documentation there.
-
-Good luck!
-
-[Powered by Buffalo](http://gobuffalo.io)
+Built with ❤️ using Go & Buffalo.

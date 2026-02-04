@@ -1,10 +1,130 @@
-<div class="jumbotron">
-    <h1 class="display-4">Welcome to Budget Tracker</h1>
-    <p class="lead">Track your expenses and income easily.</p>
-    <hr class="my-4">
+<div class="py-4">
     <%= if (current_user) { %>
-        <p>Go to your <a href="/transactions">Transactions</a>.</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+                <p class="text-muted">Welcome back, <%= current_user.Email %>
+                </p>
+            </div>
+            <a href="<%= newTransactionsPath() %>" class="btn btn-primary shadow-sm">
+                + New Transaction
+            </a>
+        </div>
+
+        <div class="row mb-5">
+            <!-- Month Summary -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-left-primary">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    This Month</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    Income: <span class="text-success">
+                                        <%= monthIncome %>
+                                    </span>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    Expense: <span class="text-danger">
+                                        <%= monthExpense %>
+                                    </span>
+                                </div>
+                                <hr class="my-2">
+                                <% let monthColor="text-success" %>
+                                    <% if (monthMargin < 0.0) { monthColor="text-danger" } %>
+                                        <div class="h4 mb-0 font-weight-bold <%= monthColor %>">
+                                            Net: <%= monthMargin %>
+                                        </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Year Summary -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 border-left-info">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    This Year</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    Income: <span class="text-success">
+                                        <%= yearIncome %>
+                                    </span>
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    Expense: <span class="text-danger">
+                                        <%= yearExpense %>
+                                    </span>
+                                </div>
+                                <hr class="my-2">
+                                <% let yearColor="text-success" %>
+                                    <% if (yearMargin < 0.0) { yearColor="text-danger" } %>
+                                        <div class="h4 mb-0 font-weight-bold <%= yearColor %>">
+                                            Net: <%= yearMargin %>
+                                        </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                <a href="<%= transactionsPath() %>" class="text-sm font-weight-bold text-primary">View All &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th class="text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <%= for (t) in recentTransactions { %>
+                                <tr>
+                                    <td>
+                                        <%= t.TransactionDate.Format("Jan 02, 2006") %>
+                                    </td>
+                                    <td class="font-weight-bold">
+                                        <%= t.Description %>
+                                    </td>
+                                    <td>
+                                        <% let badgeClass="badge-success" %>
+                                            <% if (t.Type=="Expense" ) { badgeClass="badge-danger" } %>
+                                                <span class="badge <%= badgeClass %>">
+                                                    <%= t.Type %>
+                                                </span>
+                                    </td>
+                                    <td class="text-right font-weight-bold">
+                                        <%= t.Amount %>
+                                    </td>
+                                </tr>
+                                <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <% } else { %>
-            <p>Please <a href="/signin">Sign In</a> or <a href="/users/new">Sign Up</a> to continue.</p>
+            <div class="text-center py-5">
+                <h1 class="display-4 font-weight-bold mb-4">Budget Tracker</h1>
+                <p class="lead text-muted mb-5">Master your finances with simplicity and style.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/signin" class="btn btn-primary btn-lg mr-3 shadow">Sign In</a>
+                    <a href="/users/new" class="btn btn-secondary btn-lg shadow">Sign Up</a>
+                </div>
+            </div>
             <% } %>
 </div>
